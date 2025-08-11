@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero",
+      "name": "Hero",
+      "settings": {}
+    },
+    "suggestions": {
+      "type": "suggestions",
+      "name": "Suggestions",
+      "settings": {}
+    }
+  },
+  "order": ["hero", "suggestions"]
+}

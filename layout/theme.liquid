@@ -1,0 +1,17 @@
+<html>
+    <head>
+        {{ content_for_header }}
+    <style>
+        {{settings.body_font | font_face}}
+    </style>
+        {{ 'tailwind.css' | asset_url | stylesheet_tag }}
+    </head>
+    <body>
+        {% comment %} {% section 'announcement-bar' %} {% endcomment %}
+        {% section 'header' %}
+        <main id="main" role="main" class="pt-10">
+            {{ content_for_layout }}
+        </main>
+        {% section 'footer' %}
+    </body>
+</html>

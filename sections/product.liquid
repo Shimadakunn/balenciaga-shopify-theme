@@ -1,0 +1,168 @@
+<section class="w-full min-h-full flex flex-col md:flex-row gap-px bg-black relative border-b border-black">
+    <div class="w-1/2 flex flex-col gap-px">
+        {% comment %} {% for image in section.settings.product.images %}
+            <div class="w-full h-full">
+                {{ image | image_url: width: 300 | image_tag: class: 'h-full w-full object-cover' }}
+            </div>
+        {% endfor %} {% endcomment %}
+        <img src="{{ 'a.jpg' | asset_url }}" class="aspect-[3/4]" width="100%" height="100%">
+        <img src="{{ 'b.jpg' | asset_url }}" class="aspect-[3/4]" width="100%" height="100%">
+        <img src="{{ 'a.jpg' | asset_url }}" class="aspect-[3/4]" width="100%" height="100%">
+    </div>
+   <div class="w-1/2 h-[100vh] flex flex-col items-center justify-center bg-white sticky top-10">
+    {% form 'product', product, class: 'flex flex-col items-center justify-center w-full max-w-[700px]' %}
+        {% assign current_variant = product.selected_or_first_available_variant %}
+            <h1 class="text-lg font-medium tracking-tight mb-2"> JACKET HOME 2025</h1>
+            <p class="text-sm" id="variant-price"> {{ current_variant.price | money }}</p>
+            <div class="w-full h-[1px] bg-black my-4"></div>
+            <p class="text-xs">Maille de laine double-face
+                • Col rond <br>
+                • Épaules tombantes <br>
+                • Manches longues <br>
+                • Col, poignets et ourlet côtelés <br>
+                • Étiquette Balenciaga en gomme sur la manche gauche <br>
+                • Fabriqué en Italie
+                • Nettoyage à sec
+                100 % laine vierge
+                Product ID: {{ current_variant.id }}</p>
+       
+            <div class="my-4 flex flex-col gap-4 w-full">
+                <!-- Color selector with images -->
+                <div class="flex items-center gap-2 mx-auto">
+                    {% assign unique_colors = product.variants | map: 'option1' | uniq %}
+                    {% for color in unique_colors %}
+                        {% assign color_variant = product.variants | where: "option1", color | first %}
+                        <div class="cursor-pointer p-1 rounded-md transition-all duration-200 {% if color_variant == current_variant %}border-2 border-black{% else %}border-2 border-transparent hover:border-gray-300{% endif %}"
+                        id="color-{{ color_variant.id }}" data-variant-color="{{ color }}" data-variant-id="{{ color_variant.id }}" data-variant-price="{{ color_variant.price | money }}">
+                            <img src="{{ color_variant.image | image_url: width: 100 }}" alt="{{ color_variant.image.alt | default: color }}" width="100" height="100" class="object-cover rounded-sm">
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Size selector dropdown -->
+                    <select id="size-select" class="border border-black px-3 py-2 rounded-sm bg-white text-sm w-full">
+                        <option value="">Select Size</option>
+                        {% assign unique_sizes = product.variants | map: 'option2' | uniq %}
+                        {% for size in unique_sizes %}
+                            <option value="{{ size }}" {% if current_variant.option2 == size %}selected{% endif %}>{{ size }}</option>
+                        {% endfor %}
+                    </select>
+                
+                <input type="hidden" name="id" value="{{ current_variant.id }}">
+            </div>
+               <input class="w-full h-10 bg-black text-white rounded-sm border border-black hover:bg-white hover:text-black transition-all duration-300 cursor-pointer" type="submit" value="Add to cart">
+            {% comment %} {{ form | payment_button }} {% endcomment %}
+        {% endform %}
+    </div>  
+</section>
+
+<script id="product-variant-data" type="application/json">
+  {
+    "variants": [
+      {% for variant in product.variants %}
+        {
+          "id": {{ variant.id }},
+          "color": {{ variant.option1 | json }},
+          "size": {{ variant.option2 | json }},
+          "available": {{ variant.available }},
+          "price": {{ variant.price | money | json }},
+          "image": {{ variant.image.src | image_url | json }}
+        }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    ]
+  }
+</script>
+
+{% javascript %}
+document.addEventListener('DOMContentLoaded', () => {
+  const colorSelectors = document.querySelectorAll('[data-variant-color]');
+  const sizeSelect = document.getElementById('size-select');
+  const variantInput = document.querySelector('input[name="id"]');
+  const variantPrice = document.getElementById('variant-price');
+  
+  // Get variant data from JSON
+  const variantData = JSON.parse(document.getElementById('product-variant-data').textContent);
+  const variants = variantData.variants;
+  
+  // Function to update available sizes based on selected color
+  function updateAvailableSizes(selectedColor) {
+    // Clear current options
+    sizeSelect.innerHTML = '<option value="">Select Size</option>';
+    
+    // Find all variants with the selected color
+    const availableSizes = variants.filter(v => v.color === selectedColor);
+    
+    // Group by size to avoid duplicates
+    const sizeGroups = {};
+    availableSizes.forEach(variant => {
+      if (!sizeGroups[variant.size]) {
+        sizeGroups[variant.size] = {
+          size: variant.size,
+          available: variant.available
+        };
+      }
+    });
+    
+    // Add size options
+    Object.values(sizeGroups).forEach(sizeData => {
+      const option = document.createElement('option');
+      option.value = sizeData.size;
+      option.textContent = sizeData.size;
+      if (!sizeData.available) {
+        option.disabled = true;
+        option.textContent += ' - Sold out';
+      }
+      sizeSelect.appendChild(option);
+    });
+  }
+  
+  // Function to find and select the correct variant
+  function updateSelectedVariant() {
+    const selectedColor = document.querySelector('[data-variant-color].border-black')?.dataset.variantColor;
+    const selectedSize = sizeSelect.value;
+    
+    if (!selectedColor || !selectedSize) return;
+    
+    const selectedVariant = variants.find(v => 
+      v.color === selectedColor && 
+      v.size === selectedSize
+    );
+    
+    if (selectedVariant) {
+      variantInput.value = selectedVariant.id;
+      variantPrice.textContent = selectedVariant.price;
+    }
+  }
+  
+  // Handle color selection
+  colorSelectors.forEach(selector => {
+    selector.addEventListener('click', () => {
+      const selectedColor = selector.dataset.variantColor;
+      
+      // Update active state styling
+      colorSelectors.forEach(el => {
+        el.classList.remove('border-black');
+        el.classList.add('border-transparent', 'hover:border-gray-300');
+      });
+      
+      selector.classList.remove('border-transparent', 'hover:border-gray-300');
+      selector.classList.add('border-black');
+      
+      // Update available sizes for this color
+      updateAvailableSizes(selectedColor);
+      
+      // Update the variant selection
+      updateSelectedVariant();
+    });
+  });
+  
+  // Handle size selection
+  sizeSelect.addEventListener('change', updateSelectedVariant);
+  
+  // Initialize with the first color selected
+  if (colorSelectors.length > 0) {
+    const firstColor = colorSelectors[0].dataset.variantColor;
+    updateAvailableSizes(firstColor);
+  }
+});
+{% endjavascript %}

@@ -1,0 +1,179 @@
+<footer class="flex flex-col items-center justify-center">
+    <section class="flex md:flex-row flex-col w-full bg-black gap-px">
+        <div class="w-full md:w-1/4 p-2 bg-white">
+            <h1 class="text-lg font-bold tracking-[0.1em]">
+                {{ section.settings.brand_name | upcase }}&trade;
+            </h1>
+        </div>
+        <div class="w-full md:w-1/4 p-2 bg-white">
+            <h1 class="text-sm tracking-[0.1em] md:mb-2 mb-1">
+                {{ section.settings.second_column_title | upcase }}
+            </h1>
+            <ul>
+                {% for block in section.blocks %}
+                    <li>
+                        <a href="{{ block.settings.second_column_link_url }}" class="hover:underline text-xs font-light">
+                            {{ block.settings.second_column_link_title }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="w-full md:w-1/4 p-2 bg-white">
+            <h1 class="text-sm tracking-[0.1em] md:mb-2 mb-1">
+                {{ section.settings.third_column_title | upcase }}
+            </h1>
+            <ul>
+                {% for block in section.blocks %}
+                    <li>
+                        <a href="{{ block.settings.third_column_link_url }}" class="hover:underline text-xs font-light">
+                            {{ block.settings.third_column_link_title }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="w-full md:w-1/4 p-2 bg-white">
+            <h1 class="text-sm tracking-[0.1em] md:mb-2 mb-1">
+                {{ section.settings.fourth_column_title | upcase }}
+            </h1>
+            <ul>
+                {% for block in section.blocks %}
+                    <li>
+                        <a href="{{ block.settings.fourth_column_link_url }}" class="hover:underline text-xs font-light">
+                            {{ block.settings.fourth_column_link_title }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+    </section>
+    <section class="w-full flex flex-row justify-between py-2 px-4 border-t border-black">
+        <h1 class="text-xs font-light tracking-[0.1em]">
+            &copy; {{ 'now' | date: '%Y' }}, {{ section.settings.brand_name | upcase }}.
+        </h1>
+        <div class="flex flex-wrap gap-2 justify-center my-2 md:my-0">
+            {% for payment_type in shop.enabled_payment_types %}
+                {{ payment_type | payment_type_svg_tag: class: 'h-6 w-auto' }}
+            {% endfor %}
+        </div>
+        <div class="flex gap-4 text-xs">
+            {% if shop.enabled_currencies.size > 1 %}
+                <div class="currency-selector">
+                    <form method="post" action="/localization" id="FooterCurrencyForm" accept-charset="UTF-8" class="currency-selector-form" enctype="multipart/form-data">
+                        <input type="hidden" name="form_type" value="currency" />
+                        <input type="hidden" name="utf8" value="✓" />
+                        <input type="hidden" name="return_to" value="{{ request.path }}" />
+                        <select name="currency_code" id="FooterCurrencySelector" class="border-b border-black bg-transparent cursor-pointer">
+                            {% for currency in shop.enabled_currencies %}
+                                <option value="{{ currency.iso_code }}" {% if currency.iso_code == cart.currency.iso_code %}selected="selected"{% endif %}>
+                                    {{ currency.iso_code }} {% if currency.symbol %}({{ currency.symbol }}){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            {% endif %}
+            
+            {% if shop.published_locales.size > 1 %}
+                <div class="language-selector">
+                    <form method="post" action="/localization" id="FooterLanguageForm" accept-charset="UTF-8" class="language-selector-form" enctype="multipart/form-data">
+                        <input type="hidden" name="form_type" value="localization" />
+                        <input type="hidden" name="utf8" value="✓" />
+                        <input type="hidden" name="return_to" value="{{ request.path }}" />
+                        <select name="locale_code" id="FooterLanguageSelector" class="border-b border-black bg-transparent cursor-pointer">
+                            {% for locale in shop.published_locales %}
+                                <option value="{{ locale.iso_code }}" {% if locale.iso_code == localization.language.iso_code %}selected="selected"{% endif %}>
+                                    {{ locale.endonym_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</footer>
+
+{% schema %}
+{
+    "name": "Footer",
+    "settings": [
+        {
+            "type": "text",
+            "id": "brand_name",
+            "label": "Brand Name",
+            "default": "Balenciaga"
+        },
+        {
+            "type": "text",
+            "id": "second_column_title",
+            "label": "Second Column Title",
+            "default": "Customer Service"
+        },
+        {
+            "type": "text",
+            "id": "third_column_title",
+            "label": "Third Column Title",
+            "default": "Legal"
+        },
+        {
+            "type": "text",
+            "id": "fourth_column_title",
+            "label": "Fourth Column Title",
+            "default": "Socials"
+        }
+    ],
+    "blocks": [
+        {
+            "type": "second_column_link",
+            "name": "Second Column Link",
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "second_column_link_title",
+                    "label": "Second Column Link Title"
+                },
+                {
+                    "type": "url",
+                    "id": "second_column_link_url",
+                    "label": "Second Column Link URL"
+                }
+            ]
+        },
+        {
+            "type": "third_column_link",
+            "name": "Third Column Link",
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "third_column_link_title",
+                    "label": "Third Column Link Title"
+                },
+                {
+                    "type": "url",
+                    "id": "third_column_link_url",
+                    "label": "Third Column Link URL"
+                }
+            ]
+        },
+        {
+            "type": "fourth_column_link",
+            "name": "Fourth Column Link",
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "fourth_column_link_title",
+                    "label": "Fourth Column Link Title"
+                },
+                {
+                    "type": "url",
+                    "id": "fourth_column_link_url",
+                    "label": "Fourth Column Link URL"
+                }
+            ]
+        }
+    ]       
+}
+{% endschema %}

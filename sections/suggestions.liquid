@@ -1,0 +1,67 @@
+<section class="w-full flex flex-col">
+    <h2 class="md:p-4 p-2 text-sm border-b border-black">
+        Suggestions
+    </h2>
+    <div class="grid md:grid-cols-4 grid-cols-2 gap-px bg-black">
+        {% if section.blocks.size > 0 %}
+            {% for block in section.blocks %}
+                {% assign product = block.settings.product %}
+                {% if product != blank and product.featured_image != blank %}
+                    <a href="{{ product.url }}" class="w-full flex flex-col justify-between bg-white">
+                        {{ product.featured_image | image_url: width: 300 | image_tag: class: 'h-[85%] w-full object-cover' }}
+                    <div class="flex md:flex-col flex-row items-center md:justify-center justify-between px-2 h-[15%] tracking-tight">
+                        <h1 class="text-xs font-black">
+                            {{ product.title | upcase }}
+                        </h1>
+                        <h2 class="text-xs">
+                            {{ product.price | money }}
+                        </h2>
+                    </div>
+                    </a>
+                {% else %}
+                    {% render 'product-placeholder' %}
+                {% endif %}
+            {% endfor %}
+            
+            {% comment %} Fill incomplete rows with seamless white elements {% endcomment %}
+            {% assign grid_cols = 4 %} {% if request.display_type == 'mobile' %}{% assign grid_cols = 2 %}{% endif %}
+            {% assign remainder = section.blocks.size | modulo: grid_cols %}
+            {% if remainder != 0 %}
+                {% assign empty_cells = grid_cols | minus: remainder %}
+                {% for i in (1..empty_cells) %}
+                    <div class="w-[110%] bg-white"></div>
+                {% endfor %}
+            {% endif %}
+        {% else %}
+            {% for i in (1..4) %}
+                {% render 'product-placeholder' %}
+            {% endfor %}
+        {% endif %}
+    </div>
+    {% comment %} Add border-bottom after the grid to avoid superposition with gap-px {% endcomment %}
+    <div class="w-full border-b border-black"></div>
+</section>
+
+{% schema %}
+{
+    "name": "Suggestions",
+    "blocks": [
+        {
+            "type": "suggestion_product",
+            "name": "Suggestion Product",
+            "settings": [
+                {
+                    "type": "product",
+                    "id": "product",
+                    "label": "Product"
+                }
+            ]
+        }
+    ],
+    "presets": [
+        {
+            "name": "Suggestion Products"
+        }
+    ]
+}
+{% endschema %}

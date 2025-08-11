@@ -1,0 +1,68 @@
+<section class="w-full flex flex-col">
+    <div class="md:h-[20vh] h-[10vh] flex items-center justify-center border-b border-black">
+        <h2 class="font-bold tracking-[0.1em] text-center">
+            {% if section.settings.collection == blank %}
+                COLLECTION TITLE
+            {% elsif section.settings.collection_title != blank %}
+                {{ section.settings.collection_title | upcase }}
+            {% else %}
+                {{ section.settings.collection.title | upcase }}
+            {% endif %}
+        </h2>
+    </div>
+    <div class="grid md:grid-cols-4 grid-cols-2 gap-px bg-black">
+        {% if section.settings.collection != blank %}
+            {% for product in section.settings.collection.products %}
+                {% if product != blank and product.featured_image != blank %}
+                    <a href="{{ product.url }}" class="w-full flex flex-col justify-between bg-white">
+                        {{ product.featured_image | image_url: width: 300 | image_tag: class: 'h-[85%] w-full object-cover' }}
+                    <div class="flex md:flex-col flex-row items-center md:justify-center justify-between px-2 h-[15%] tracking-tight">
+                        <h1 class="text-xs font-black">
+                            {{ product.title | upcase }}
+                        </h1>
+                        <h2 class="text-xs">
+                            {{ product.price | money }}
+                        </h2>
+                    </div>
+                    </a>
+                {% else %}
+                    {% render 'product-placeholder' %}
+                {% endif %}
+            {% endfor %}
+            
+            {% comment %} Fill incomplete rows with seamless white elements {% endcomment %}
+            {% assign grid_cols = 4 %} {% if request.display_type == 'mobile' %}{% endif %}
+            {% assign remainder = section.settings.collection.products.size | modulo: grid_cols %}
+            {% if remainder != 0 %}
+                {% assign empty_cells = grid_cols | minus: remainder %}
+                {% for i in (1..empty_cells) %}
+                    <div class="w-[110%] bg-white"></div>
+                {% endfor %}
+            {% endif %}
+        {% else %}
+            {% for i in (1..4) %}
+                {% render 'product-placeholder' %}
+            {% endfor %}
+        {% endif %} 
+    </div>
+    {% comment %} Add border-bottom after the grid to avoid superposition with gap-px {% endcomment %}
+    <div class="w-full border-b border-black"></div>
+</section>
+
+{% schema %}
+{
+    "name": "Collection",
+    "settings": [
+        {
+            "type": "collection",
+            "id": "collection",
+            "label": "Collection"
+        },
+        {
+            "type": "text",
+            "id": "collection_title",
+            "label": "Collection Title"
+        }
+    ]
+}
+{% endschema %} 

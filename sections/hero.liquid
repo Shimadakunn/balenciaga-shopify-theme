@@ -1,87 +1,100 @@
-<section class="h-[80dvh] w-full flex items-center justify-center relative overflow-hidden border-b border-black">
-   {% if section.settings.hero_web_image or section.settings.hero_mobile_image %}
-      <img 
-        src="{{ section.settings.hero_web_image | image_url }}" 
-        alt="{{ section.settings.hero_web_image.alt }}" 
-        class="absolute inset-0 w-full h-full object-cover hidden md:block"
-        width="100"
-        height="100"
-        loading="lazy">
-      <img 
-        src="{{ section.settings.hero_mobile_image | image_url }}" 
-        alt="{{ section.settings.hero_mobile_image.alt }}" 
-        class="absolute inset-0 w-full h-full object-cover block md:hidden"
-        width="100"
-        height="100"
-        loading="lazy">
-    {% else %} {{ 'collection-1' | placeholder_svg_tag: 'absolute inset-0 w-full h-full object-cover bg-gray-300 blur-[4px]' }} {% endif %}
-   <div class="absolute bottom-[5%] left-1/2 transform -translate-x-1/2 flex flex-col  gap-2 items-center">
-     <h1 class="text-xl font-bold uppercase tracking-[0.1em]" style="color: {{ section.settings.hero_text_color }};"> 
-        {{ section.settings.hero_text }}
-     </h1>
-     <div class="flex flex-row gap-2">
-        {% for block in section.blocks %}
-            <a href="{{ block.settings.hero_button_link }}" class="text-xs bg-white border border-black w-30 text-center pb-2 pt-2.5 rounded-md uppercase">
-                {{ block.settings.hero_button_text }}
-            </a>
-        {% endfor %}
-        {% if section.blocks.size == 0 %}
-           <div class="text-xs bg-white border border-black w-30 text-center pb-2 pt-2.5 rounded-md uppercase">
-             shop men
-           </div>
-           <div class="text-xs bg-white border border-black w-30 text-center pb-2 pt-2.5 rounded-md uppercase">
-            shop women
-           </div>
-        {% endif %}
-     </div>
-   </div>
+<section class='relative flex h-[80dvh] w-full items-center justify-center overflow-hidden border-b border-black'>
+  {% if section.settings.hero_web_image or section.settings.hero_mobile_image %}
+    <img
+      src='{{ section.settings.hero_web_image | image_url }}'
+      alt='{{ section.settings.hero_web_image.alt }}'
+      class='absolute inset-0 hidden h-full w-full object-cover md:block'
+      width='100'
+      height='100'
+      loading='lazy'
+    >
+    <img
+      src='{{ section.settings.hero_mobile_image | image_url }}'
+      alt='{{ section.settings.hero_mobile_image.alt }}'
+      class='absolute inset-0 block h-full w-full object-cover md:hidden'
+      width='100'
+      height='100'
+      loading='lazy'
+    >
+  {% else %}
+    {{
+      'collection-1'
+      | placeholder_svg_tag: 'absolute inset-0 w-full h-full object-cover bg-gray-300 blur-[4px]'
+    }}
+  {% endif %}
+  <div class='absolute bottom-[5%] left-1/2 flex -translate-x-1/2 transform flex-col  items-center gap-2'>
+    <h1
+      class='text-xl font-bold tracking-[0.1em] uppercase'
+      style='color: {{ section.settings.hero_text_color }};'
+    >
+      {{ section.settings.hero_text }}
+    </h1>
+    <div class='flex flex-row gap-2'>
+      {% for block in section.blocks %}
+        <a
+          href='{{ block.settings.hero_button_link }}'
+          class='w-30 rounded-md border border-black bg-white pt-2.5 pb-2 text-center text-xs uppercase'
+        >
+          {{ block.settings.hero_button_text }}
+        </a>
+      {% endfor %}
+      {% if section.blocks.size == 0 %}
+        <div class='w-30 rounded-md border border-black bg-white pt-2.5 pb-2 text-center text-xs uppercase'>
+          shop men
+        </div>
+        <div class='w-30 rounded-md border border-black bg-white pt-2.5 pb-2 text-center text-xs uppercase'>
+          shop women
+        </div>
+      {% endif %}
+    </div>
+  </div>
 </section>
 
 {% schema %}
 {
-    "name": "Hero",
-    "settings": [
+  "name": "Hero",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "hero_web_image",
+      "label": "Hero Web Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_mobile_image",
+      "label": "Hero Mobile Image"
+    },
+    {
+      "type": "text",
+      "id": "hero_text",
+      "label": "Hero Text",
+      "default": "winter 25"
+    },
+    {
+      "type": "color",
+      "id": "hero_text_color",
+      "label": "Hero Text Color",
+      "default": "#000000"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "hero_button",
+      "name": "Hero Button",
+      "settings": [
         {
-            "type": "image_picker",
-            "id": "hero_web_image",
-            "label": "Hero Web Image"
+          "type": "text",
+          "id": "hero_button_text",
+          "label": "Hero Button Text",
+          "default": "shop now"
         },
         {
-            "type": "image_picker",
-            "id": "hero_mobile_image",
-            "label": "Hero Mobile Image"
-        },
-        {
-            "type": "text",
-            "id": "hero_text",
-            "label": "Hero Text",
-            "default": "winter 25"
-        },
-        {
-            "type": "color",
-            "id": "hero_text_color",
-            "label": "Hero Text Color",
-            "default": "#000000"
+          "type": "url",
+          "id": "hero_button_link",
+          "label": "Hero Button Link"
         }
-    ],
-    "blocks": [
-        {
-            "type": "hero_button",
-            "name": "Hero Button",
-            "settings": [
-                {
-                    "type": "text",
-                    "id": "hero_button_text",
-                    "label": "Hero Button Text",
-                    "default": "shop now"
-                }, 
-                {
-                    "type": "url",
-                    "id": "hero_button_link",
-                    "label": "Hero Button Link"
-                }
-            ]
-        }
-    ]
+      ]
+    }
+  ]
 }
 {% endschema %}

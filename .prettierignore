@@ -1,0 +1,7 @@
+node_modules/
+.git/
+.shopify/
+pnpm-lock.yaml
+*.min.js
+*.min.css
+.cursor/ 

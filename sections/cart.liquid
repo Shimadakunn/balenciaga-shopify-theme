@@ -1,0 +1,446 @@
+<cart-drawer class='pointer-events-none fixed inset-0 z-[60]'>
+  <!-- Overlay -->
+  <div
+    class='pointer-events-none fixed inset-0 bg-black/50 opacity-0 transition-opacity duration-300'
+    data-cart-overlay
+  ></div>
+
+  <!-- Cart Drawer -->
+  <div
+    class='pointer-events-auto fixed top-0 right-0 flex h-full w-full flex-col border border-black bg-white transition-transform duration-300 ease-in-out md:w-[30vw]'
+    data-cart-drawer
+  >
+    <!-- Header -->
+    <div class='flex items-center justify-between border-b border-black p-[0.6rem]'>
+      <div class='w-1/3'></div>
+      <h2 class='w-1/3 text-sm font-bold'>
+        {{ 'cart.general.title' | t | upcase }}
+      </h2>
+      <button
+        type='button'
+        class='rounded-md p-2 transition-colors hover:bg-gray-100'
+        data-cart-close
+        aria-label='{{ 'cart.general.close' | t }}'
+      >
+        <svg
+          class='h-4 w-4'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Cart Items -->
+    <div class='flex-1 overflow-y-auto p-4'>
+      {% if cart.item_count > 0 %}
+        <div class='space-y-4' data-cart-items>
+          {% for item in cart.items %}
+            <div class=''>
+              <div class='flex gap-4'>
+                {% if item.image %}
+                  <img
+                    src='{{ item.image | image_url: width: 150 }}'
+                    alt='{{ item.title }}'
+                    width='150'
+                    height='150'
+                    class='aspect-7/8 w-24 rounded-sm object-cover'
+                  >
+                {% endif %}
+                <div class='flex flex-1 flex-col justify-center'>
+                  <!-- Title -->
+                  <h3 class='mb-4 text-sm font-semibold tracking-tight'>
+                    {{ item.product.title | upcase }}
+                  </h3>
+                  <!-- Colors and Sizes -->
+                  <div>
+                    {% assign unique_colors = item.product.variants
+                      | map: 'option1'
+                      | uniq
+                    %}
+                    {% assign unique_sizes = item.product.variants
+                      | map: 'option2'
+                      | uniq
+                    %}
+                    {% assign color = item.variant.option1 %}
+                    {% assign size = item.variant.option2 %}
+                    {% if unique_colors.size > 1 %}
+                      <p class='text-xs'>Color: {{ color }}</p>
+                    {% endif %}
+                    {% if unique_sizes.size > 1 %}
+                      <p class='text-xs'>Size: {{ size }}</p>
+                    {% endif %}
+                    <div class='flex items-center justify-between'>
+                      <!-- Quantity -->
+                      <div class='flex items-center gap-2'>
+                        <p class='text-xs'>Quantity:</p>
+                        <div class='flex items-center'>
+                          <button
+                            type='button'
+                            class='flex h-6 w-6 items-center justify-center rounded text-2xl hover:bg-gray-100'
+                            data-cart-decrease
+                            data-line='{{ forloop.index }}'
+                          >
+                            -
+                          </button>
+                          <span class='w-6 text-center text-sm'>
+                            {{- item.quantity -}}
+                          </span>
+                          <button
+                            type='button'
+                            class='flex h-6 w-6 items-center justify-center rounded text-lg hover:bg-gray-100'
+                            data-cart-increase
+                            data-line='{{ forloop.index }}'
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <!-- Price -->
+                      <p class='text-sm font-medium'>
+                        {{ item.final_line_price | money }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class='mt-2 flex items-center justify-between border-b border-black pb-4'>
+                <div></div>
+                <button 
+                  type='button' 
+                  class='text-sm underline hover:no-underline'
+                  data-cart-remove
+                  data-line='{{ forloop.index }}'
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class='py-8 text-center' data-cart-empty>
+          <p class='mb-4 text-gray-600'>{{ 'cart.general.empty' | t }}</p>
+          <button
+            type='button'
+            class='border border-black px-4 py-2 text-black transition-colors hover:bg-black hover:text-white'
+            data-cart-close
+          >
+            {{ 'cart.general.continue_shopping' | t | upcase }}
+          </button>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    {% if cart.item_count > 0 %}
+      <div class='space-y-4 border-t border-gray-200 p-4'>
+        <div class='flex items-center justify-between'>
+          <span class='text-sm font-medium tracking-tight'>
+            {{- 'cart.general.subtotal' | t | upcase -}}
+          </span>
+          <span class='text-sm font-medium tracking-tight' data-cart-total>
+            {{- cart.total_price | money -}}
+          </span>
+        </div>
+        <p class='text-xs text-gray-500'>
+          Shipping and taxes calculated at checkout
+        </p>
+        <button
+          type='button'
+          class='w-full bg-black py-3 text-sm font-medium tracking-wide text-white uppercase transition-colors hover:bg-gray-800'
+        >
+          {{ 'cart.general.checkout' | t | upcase }}
+        </button>
+      </div>
+    {% endif %}
+  </div>
+</cart-drawer>
+
+{% stylesheet %}
+  [data-cart-drawer] {
+    transform: translateX(100%);
+  }
+
+  cart-drawer[open] [data-cart-overlay] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  cart-drawer[open] [data-cart-drawer] {
+    transform: translateX(0);
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class CartDrawer extends HTMLElement {
+    constructor() {
+      super();
+      console.log('CartDrawer initialized');
+      this.#initializeElements();
+      this.#bindEvents();
+      console.log('Initial buttons found:', {
+        increase: this.increaseButtons.length,
+        decrease: this.decreaseButtons.length,
+        remove: this.removeButtons.length
+      });
+    }
+
+    #initializeElements() {
+      this.overlay = this.querySelector('[data-cart-overlay]');
+      this.drawer = this.querySelector('[data-cart-drawer]');
+      this.closeButtons = this.querySelectorAll('[data-cart-close]');
+      this.increaseButtons = this.querySelectorAll('[data-cart-increase]');
+      this.decreaseButtons = this.querySelectorAll('[data-cart-decrease]');
+      this.removeButtons = this.querySelectorAll('[data-cart-remove]');
+    }
+
+    // Public method to reinitialize after content update
+    reinitialize() {
+      console.log('Reinitializing cart drawer...');
+      this.#initializeElements();
+      this.#bindEvents();
+      console.log('Found buttons:', {
+        increase: this.increaseButtons.length,
+        decrease: this.decreaseButtons.length,
+        remove: this.removeButtons.length
+      });
+    }
+
+    #bindEvents() {
+      // Store bound handlers for later removal (only create once)
+      if (!this.closeHandler) {
+        this.closeHandler = () => this.close();
+        this.openHandler = () => this.open();
+        this.keyHandler = (e) => {
+          if (e.key === 'Escape' && this.hasAttribute('open')) {
+            this.close();
+          }
+        };
+      }
+
+      // Remove existing event listeners to prevent duplicates
+      this.closeButtons.forEach((button) => {
+        button.removeEventListener('click', this.closeHandler);
+      });
+      
+      this.increaseButtons.forEach((button) => {
+        button.removeEventListener('click', this.increaseHandler);
+      });
+      
+      this.decreaseButtons.forEach((button) => {
+        button.removeEventListener('click', this.decreaseHandler);
+      });
+      
+      this.removeButtons.forEach((button) => {
+        button.removeEventListener('click', this.removeHandler);
+      });
+
+      // Create new handlers for quantity/remove (these need to be recreated for new elements)
+      this.increaseHandler = (e) => {
+        console.log('Increase clicked for line:', e.target.dataset.line);
+        this.#updateQuantity(e.target.dataset.line, 1);
+      };
+      
+      this.decreaseHandler = (e) => {
+        console.log('Decrease clicked for line:', e.target.dataset.line);
+        this.#updateQuantity(e.target.dataset.line, -1);
+      };
+      
+      this.removeHandler = (e) => {
+        console.log('Remove clicked for line:', e.target.dataset.line);
+        this.#removeItem(e.target.dataset.line);
+      };
+
+      // Close cart
+      this.closeButtons.forEach((button) => {
+        button.addEventListener('click', this.closeHandler);
+      });
+
+      if (this.overlay) {
+        this.overlay.removeEventListener('click', this.closeHandler);
+        this.overlay.addEventListener('click', this.closeHandler);
+      }
+
+      // Quantity updates
+      this.increaseButtons.forEach((button) => {
+        button.addEventListener('click', this.increaseHandler);
+      });
+
+      this.decreaseButtons.forEach((button) => {
+        button.addEventListener('click', this.decreaseHandler);
+      });
+
+      // Remove items
+      this.removeButtons.forEach((button) => {
+        button.addEventListener('click', this.removeHandler);
+      });
+
+      // Only bind global events once
+      if (!this.globalEventsBound) {
+        // Listen for cart open events
+        document.addEventListener('cart:open', this.openHandler);
+
+        // ESC key to close
+        document.addEventListener('keydown', this.keyHandler);
+        
+        this.globalEventsBound = true;
+      }
+    }
+
+    open() {
+      this.setAttribute('open', '');
+      document.body.style.overflow = 'hidden';
+
+      // Focus first focusable element
+      const firstFocusable = this.drawer.querySelector(
+        'button, [href], [tabindex]:not([tabindex="-1"])'
+      );
+      firstFocusable?.focus();
+    }
+
+    close() {
+      this.removeAttribute('open');
+      document.body.style.overflow = '';
+    }
+
+    async #updateQuantity(line, change) {
+      try {
+        // Find the quantity span more reliably by looking for the button first
+        const button = this.querySelector(`[data-cart-increase][data-line="${line}"], [data-cart-decrease][data-line="${line}"]`);
+        if (!button) {
+          console.error('Could not find quantity button for line:', line);
+          return;
+        }
+        
+        const quantitySpan = button.parentElement.querySelector('span');
+        if (!quantitySpan) {
+          console.error('Could not find quantity span for line:', line);
+          return;
+        }
+        
+        const currentQuantity = parseInt(quantitySpan.textContent.trim());
+        const newQuantity = Math.max(0, currentQuantity + change);
+
+        console.log('Updating quantity for line', line, 'from', currentQuantity, 'to', newQuantity);
+
+        const response = await fetch('/cart/change.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            line: parseInt(line),
+            quantity: newQuantity,
+          }),
+        });
+
+        if (response.ok) {
+          const cart = await response.json();
+          this.#updateCartDisplay(cart);
+          document.dispatchEvent(
+            new CustomEvent('cart:updated', { detail: cart })
+          );
+        } else {
+          console.error('Cart update failed:', response.status);
+        }
+      } catch (error) {
+        console.error('Error updating cart:', error);
+      }
+    }
+
+    async #removeItem(line) {
+      try {
+        const response = await fetch('/cart/change.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            line: parseInt(line),
+            quantity: 0,
+          }),
+        });
+
+        if (response.ok) {
+          const cart = await response.json();
+          this.#updateCartDisplay(cart);
+          document.dispatchEvent(
+            new CustomEvent('cart:updated', { detail: cart })
+          );
+        }
+      } catch (error) {
+        console.error('Error removing item from cart:', error);
+      }
+    }
+
+    async #updateCartDisplay(cart) {
+      try {
+        // Fetch updated cart HTML from the cart section
+        const response = await fetch(`${window.location.pathname}?section_id=cart`);
+        const text = await response.text();
+        const parser = new DOMParser();
+        const newDoc = parser.parseFromString(text, 'text/html');
+        
+        // Update cart items container
+        const currentItemsContainer = this.querySelector('[data-cart-items]');
+        const newItemsContainer = newDoc.querySelector('[data-cart-items]');
+        
+        if (currentItemsContainer && newItemsContainer) {
+          currentItemsContainer.innerHTML = newItemsContainer.innerHTML;
+        }
+        
+        // Update cart total
+        const currentTotal = this.querySelector('[data-cart-total]');
+        const newTotal = newDoc.querySelector('[data-cart-total]');
+        
+        if (currentTotal && newTotal) {
+          currentTotal.textContent = newTotal.textContent;
+        }
+        
+        // Show/hide empty cart message and footer
+        const cartItemsArea = this.querySelector('.flex-1.overflow-y-auto.p-4');
+        const cartFooter = this.querySelector('.space-y-4.border-t.border-gray-200.p-4');
+        const newCartItemsArea = newDoc.querySelector('.flex-1.overflow-y-auto.p-4');
+        const newCartFooter = newDoc.querySelector('.space-y-4.border-t.border-gray-200.p-4');
+        
+        if (cartItemsArea && newCartItemsArea) {
+          cartItemsArea.innerHTML = newCartItemsArea.innerHTML;
+        }
+        
+        if (cart.item_count === 0) {
+          cartFooter?.remove();
+        } else if (!cartFooter && newCartFooter) {
+          this.querySelector('[data-cart-drawer]').appendChild(newCartFooter);
+        } else if (cartFooter && newCartFooter) {
+          cartFooter.innerHTML = newCartFooter.innerHTML;
+        }
+        
+        // Reinitialize event listeners for new elements
+        this.reinitialize();
+        
+        // Update any cart count displays on the page
+        const cartCountElements = document.querySelectorAll('[data-cart-count]');
+        cartCountElements.forEach(element => {
+          element.textContent = cart.item_count;
+        });
+        
+      } catch (error) {
+        console.error('Error updating cart display:', error);
+        // Fallback to reload if dynamic update fails
+        location.reload();
+      }
+    }
+  }
+
+  customElements.define('cart-drawer', CartDrawer);
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Cart Drawer",
+  "limit": 1
+}
+{% endschema %}

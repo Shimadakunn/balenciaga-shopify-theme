@@ -1,17 +1,20 @@
 <html>
-    <head>
-        {{ content_for_header }}
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    {{ content_for_header }}
     <style>
-        {{settings.body_font | font_face}}
+      {{settings.body_font | font_face}}
     </style>
-        {{ 'tailwind.css' | asset_url | stylesheet_tag }}
-    </head>
-    <body>
-        {% comment %} {% section 'announcement-bar' %} {% endcomment %}
-        {% section 'header' %}
-        <main id="main" role="main" class="pt-10">
-            {{ content_for_layout }}
-        </main>
-        {% section 'footer' %}
-    </body>
+    {{ 'tailwind.css' | asset_url | stylesheet_tag }}
+  </head>
+  <body>
+    {% comment %} {% section 'announcement-bar' %} {% endcomment %}
+    {% section 'header' %}
+    <main id='main' role='main' class='pt-14 md:pt-10'>
+      {{ content_for_layout }}
+    </main>
+    {% section 'footer' %}
+    {% section 'cart' %}
+  </body>
 </html>

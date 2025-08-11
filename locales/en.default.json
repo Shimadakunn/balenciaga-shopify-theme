@@ -1,0 +1,12 @@
+{
+  "cart": {
+    "general": {
+      "title": "Cart",
+      "close": "Close cart",
+      "empty": "Your cart is empty",
+      "continue_shopping": "Continue shopping",
+      "subtotal": "Subtotal",
+      "checkout": "Checkout"
+    }
+  }
+}

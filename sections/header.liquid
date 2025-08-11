@@ -1,33 +1,67 @@
-<header class="flex justify-between items-center py-2 px-4 border-b border-black w-full bg-white fixed top-0 z-50">
-    <nav class="w-1/3">
-        <ul class="flex gap-2">
-           {% for link in linklists.collections.links %}
-                <li class="text-xs border border-transparent transition-all duration-300 hover:border-black px-2 pb-1 pt-1.5 rounded-md">
-                    <a href="{{ link.url }}">
-                        {{ link.title | upcase }}
-                    </a>
-                </li>
-           {% endfor %}
-        </ul>
-    </nav>
-    <a href="{{ routes.root_url }}" class="absolute left-1/2 transform -translate-x-1/2 text-xl font-bold tracking-[0.1em]">
-       {{ section.settings.brand_name | upcase }}
-    </a>
-    <div class="w-1/3 flex justify-end">
-        cart
-    </div>
+<header class='fixed top-0 z-50 flex w-full items-center justify-between border-b border-black bg-white px-4 py-2'>
+  <nav class='w-1/3'>
+    <ul class='flex gap-2'>
+      {% for collection in collections %}
+        <li class='rounded-md border border-transparent px-2 pt-1.5 pb-1 text-xs transition-all duration-300 hover:border-black'>
+          <a href='{{ collection.url }}'>
+            {{ collection.title | upcase }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <a
+    href='{{ routes.root_url }}'
+    class='absolute left-1/2 -translate-x-1/2 transform text-xl font-bold tracking-[0.1em]'
+  >
+    {{ section.settings.brand_name | upcase }}
+  </a>
+  <div class='flex w-1/3 justify-end'>
+    <button
+      type='button'
+      class='relative rounded-md transition-colors hover:bg-gray-100'
+      data-cart-trigger
+      aria-label='Open cart'
+    >
+      <svg
+        class='aspect-square w-4 md:w-5'
+        viewBox='-1 -1 18 18'
+        fill='none'
+        stroke='currentColor'
+      >
+        <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1m3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/>
+      </svg>
+      {% if cart.item_count > 0 %}
+        <div
+          class='absolute -top-1 -right-1 aspect-square w-2 rounded-full bg-red-500'
+        ></div>
+      {% endif %}
+    </button>
+  </div>
 </header>
 
 {% schema %}
 {
-    "name": "Header",
-    "settings": [
-        {
-            "type": "text",
-            "id": "brand_name",
-            "label": "Brand Name",
-            "default": "BALENCIAGA"
-        }
-    ]
+  "name": "Header",
+  "settings": [
+    {
+      "type": "text",
+      "id": "brand_name",
+      "label": "Brand Name",
+      "default": "BALENCIAGA"
+    }
+  ]
 }
 {% endschema %}
+
+{% javascript %}
+  document.addEventListener('DOMContentLoaded', () => {
+    const cartTrigger = document.querySelector('[data-cart-trigger]');
+
+    if (cartTrigger) {
+      cartTrigger.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('cart:open'));
+      });
+    }
+  });
+{% endjavascript %}

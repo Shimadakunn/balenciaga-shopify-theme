@@ -1,62 +1,151 @@
-<section class="w-full min-h-full flex flex-col md:flex-row gap-px bg-black relative border-b border-black">
-    <div class="w-1/2 flex flex-col gap-px">
-        {% comment %} {% for image in section.settings.product.images %}
-            <div class="w-full h-full">
-                {{ image | image_url: width: 300 | image_tag: class: 'h-full w-full object-cover' }}
-            </div>
-        {% endfor %} {% endcomment %}
-        <img src="{{ 'a.jpg' | asset_url }}" class="aspect-[3/4]" width="100%" height="100%">
-        <img src="{{ 'b.jpg' | asset_url }}" class="aspect-[3/4]" width="100%" height="100%">
-        <img src="{{ 'a.jpg' | asset_url }}" class="aspect-[3/4]" width="100%" height="100%">
+<section class='flex w-full flex-col gap-px border-b border-black bg-black md:flex-row'>
+  <!-- Mobile Gallery -->
+  <div class='relative block w-full md:hidden'>
+    <div class='gallery-container w-full overflow-hidden'>
+      <div
+        class='gallery-images flex w-full transition-transform duration-300 ease-in-out'
+        id='gallery-track'
+        style='width: {{ product.images.size | times: 100 }}%'
+      >
+        {% for image in product.images %}
+          <div
+            class='gallery-slide flex-shrink-0'
+            style='width: {{ 100.0 | divided_by: product.images.size }}%'
+          >
+            {{
+              image
+              | image_url: width: 800
+              | image_tag: class: 'w-full h-[60vh] object-cover'
+            }}
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Navigation Arrows -->
+      <button
+        class='gallery-nav gallery-prev absolute top-1/2 left-0 z-10 flex aspect-square w-10 -translate-y-1/2 items-center justify-center p-1'
+        id='gallery-prev'
+      >
+        <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <button
+        class='gallery-nav gallery-next absolute top-1/2 right-0 z-10 flex aspect-square w-10 -translate-y-1/2 items-center justify-center p-1'
+        id='gallery-next'
+      >
+        <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
-   <div class="w-1/2 h-[100vh] flex flex-col items-center justify-center bg-white sticky top-10">
-    {% form 'product', product, class: 'flex flex-col items-center justify-center w-full max-w-[700px]' %}
-        {% assign current_variant = product.selected_or_first_available_variant %}
-            <h1 class="text-lg font-medium tracking-tight mb-2"> JACKET HOME 2025</h1>
-            <p class="text-sm" id="variant-price"> {{ current_variant.price | money }}</p>
-            <div class="w-full h-[1px] bg-black my-4"></div>
-            <p class="text-xs">Maille de laine double-face
-                • Col rond <br>
-                • Épaules tombantes <br>
-                • Manches longues <br>
-                • Col, poignets et ourlet côtelés <br>
-                • Étiquette Balenciaga en gomme sur la manche gauche <br>
-                • Fabriqué en Italie
-                • Nettoyage à sec
-                100 % laine vierge
-                Product ID: {{ current_variant.id }}</p>
-       
-            <div class="my-4 flex flex-col gap-4 w-full">
-                <!-- Color selector with images -->
-                <div class="flex items-center gap-2 mx-auto">
-                    {% assign unique_colors = product.variants | map: 'option1' | uniq %}
-                    {% for color in unique_colors %}
-                        {% assign color_variant = product.variants | where: "option1", color | first %}
-                        <div class="cursor-pointer p-1 rounded-md transition-all duration-200 {% if color_variant == current_variant %}border-2 border-black{% else %}border-2 border-transparent hover:border-gray-300{% endif %}"
-                        id="color-{{ color_variant.id }}" data-variant-color="{{ color }}" data-variant-id="{{ color_variant.id }}" data-variant-price="{{ color_variant.price | money }}">
-                            <img src="{{ color_variant.image | image_url: width: 100 }}" alt="{{ color_variant.image.alt | default: color }}" width="100" height="100" class="object-cover rounded-sm">
-                        </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Size selector dropdown -->
-                    <select id="size-select" class="border border-black px-3 py-2 rounded-sm bg-white text-sm w-full">
-                        <option value="">Select Size</option>
-                        {% assign unique_sizes = product.variants | map: 'option2' | uniq %}
-                        {% for size in unique_sizes %}
-                            <option value="{{ size }}" {% if current_variant.option2 == size %}selected{% endif %}>{{ size }}</option>
-                        {% endfor %}
-                    </select>
-                
-                <input type="hidden" name="id" value="{{ current_variant.id }}">
-            </div>
-               <input class="w-full h-10 bg-black text-white rounded-sm border border-black hover:bg-white hover:text-black transition-all duration-300 cursor-pointer" type="submit" value="Add to cart">
-            {% comment %} {{ form | payment_button }} {% endcomment %}
-        {% endform %}
-    </div>  
+
+    <!-- Dot Indicators -->
+    <div
+      class='gallery-dots absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 justify-center gap-2'
+      id='gallery-dots'
+    >
+      {% for image in product.images %}
+        <button
+          class='dot aspect-square w-2 rounded-full transition-all duration-200 {% if forloop.first %}bg-black{% else %}bg-gray-300{% endif %}'
+          data-slide='{{ forloop.index0 }}'
+        ></button>
+      {% endfor %}
+    </div>
+  </div>
+  <!-- Desktop Images -->
+  <div class='hidden h-full w-full gap-px md:block md:w-1/2'>
+    {% for image in product.images %}
+      <div class='h-full w-full'>
+        {{
+          image
+          | image_url: width: 800
+          | image_tag: class: 'h-full w-full object-cover'
+        }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Product Info -->
+  <div class='sticky top-10 flex w-full flex-col items-center justify-center bg-white md:h-[100vh] md:w-1/2'>
+    {% form 'product',
+      product,
+      class: 'flex flex-col items-center justify-center md:w-[30vw] w-[90vw] my-8'
+    %}
+      {% assign current_variant = product.selected_or_first_available_variant %}
+      <h1 class='mb-2 text-sm font-semibold tracking-normal'>
+        {{ product.title | upcase }}
+      </h1>
+      <p class='text-sm' id='variant-price'>
+        {{ current_variant.price | money }}
+      </p>
+      <div class='my-4 h-[1px] w-full bg-black'></div>
+      <p>{{ product.description }}</p>
+
+      <div class='my-4 flex w-full flex-col gap-4'>
+        {% assign unique_colors = product.variants | map: 'option1' | uniq %}
+        {% assign unique_sizes = product.variants | map: 'option2' | uniq %}
+
+        <!-- Color selector with images -->
+        {% if unique_colors.size > 1 %}
+          <div class='mx-auto flex items-center gap-2'>
+            {% for color in unique_colors %}
+              {% assign color_variant = product.variants
+                | where: 'option1', color
+                | first
+              %}
+              <div
+                class='cursor-pointer rounded-md p-1 transition-all duration-200 {% if color_variant == current_variant %}border-2 border-black{% else %}border-2 border-transparent hover:border-gray-300{% endif %}'
+                id='color-{{ color_variant.id }}'
+                data-variant-color='{{ color }}'
+                data-variant-id='{{ color_variant.id }}'
+                data-variant-price='{{ color_variant.price | money }}'
+              >
+                <img
+                  src='{{ color_variant.image | image_url: width: 400 }}'
+                  alt='{{ color_variant.image.alt | default: color }}'
+                  width='100'
+                  height='100'
+                  class='rounded-sm object-cover'
+                >
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Size selector dropdown -->
+        {% if unique_sizes.size > 1 %}
+          <select
+            id='size-select'
+            class='w-full rounded-sm border border-black bg-white px-3 py-2 text-sm'
+          >
+            <option value=''>Select Size</option>
+            {% for size in unique_sizes %}
+              <option
+                value='{{ size }}'
+                {% if current_variant.option2 == size %}
+                  selected
+                {% endif %}
+              >
+                {{ size }}
+              </option>
+            {% endfor %}
+          </select>
+        {% endif %}
+        <input type='hidden' name='id' value='{{ current_variant.id }}'>
+      </div>
+      <input
+        class='h-10 w-full cursor-pointer rounded-sm border border-black bg-black text-sm font-light tracking-normal text-white transition-all duration-300 hover:bg-white hover:text-black'
+        type='submit'
+        value='ADD TO CART'
+      >
+      {% comment %} {{ form | payment_button }} {% endcomment %}
+    {% endform %}
+  </div>
 </section>
 
-<script id="product-variant-data" type="application/json">
+<script id='product-variant-data' type='application/json'>
   {
     "variants": [
       {% for variant in product.variants %}
@@ -74,95 +163,304 @@
 </script>
 
 {% javascript %}
-document.addEventListener('DOMContentLoaded', () => {
-  const colorSelectors = document.querySelectorAll('[data-variant-color]');
-  const sizeSelect = document.getElementById('size-select');
-  const variantInput = document.querySelector('input[name="id"]');
-  const variantPrice = document.getElementById('variant-price');
-  
-  // Get variant data from JSON
-  const variantData = JSON.parse(document.getElementById('product-variant-data').textContent);
-  const variants = variantData.variants;
-  
-  // Function to update available sizes based on selected color
-  function updateAvailableSizes(selectedColor) {
-    // Clear current options
-    sizeSelect.innerHTML = '<option value="">Select Size</option>';
-    
-    // Find all variants with the selected color
-    const availableSizes = variants.filter(v => v.color === selectedColor);
-    
-    // Group by size to avoid duplicates
-    const sizeGroups = {};
-    availableSizes.forEach(variant => {
-      if (!sizeGroups[variant.size]) {
-        sizeGroups[variant.size] = {
-          size: variant.size,
-          available: variant.available
-        };
+  document.addEventListener('DOMContentLoaded', () => {
+    const colorSelectors = document.querySelectorAll('[data-variant-color]');
+    const sizeSelect = document.getElementById('size-select');
+    const variantInput = document.querySelector('input[name="id"]');
+    const variantPrice = document.getElementById('variant-price');
+    const productForm = document.querySelector('form[action*="/cart/add"]');
+    const addToCartButton = document.querySelector('input[type="submit"]');
+
+    // Gallery functionality
+    const galleryTrack = document.getElementById('gallery-track');
+    const galleryPrev = document.getElementById('gallery-prev');
+    const galleryNext = document.getElementById('gallery-next');
+    const galleryDots = document.querySelectorAll('.dot');
+
+    if (galleryTrack) {
+      let currentSlide = 0;
+      const totalSlides = galleryDots.length;
+
+      function updateGallery() {
+        const translateX = -(currentSlide * (100 / totalSlides));
+        galleryTrack.style.transform = `translateX(${translateX}%)`;
+
+        // Update dots
+        galleryDots.forEach((dot, index) => {
+          if (index === currentSlide) {
+            dot.classList.remove('bg-gray-300');
+            dot.classList.add('bg-black');
+          } else {
+            dot.classList.remove('bg-black');
+            dot.classList.add('bg-gray-300');
+          }
+        });
+
+        // Update arrow visibility
+        galleryPrev.style.opacity = currentSlide === 0 ? '0.5' : '1';
+        galleryNext.style.opacity =
+          currentSlide === totalSlides - 1 ? '0.5' : '1';
       }
-    });
-    
-    // Add size options
-    Object.values(sizeGroups).forEach(sizeData => {
-      const option = document.createElement('option');
-      option.value = sizeData.size;
-      option.textContent = sizeData.size;
-      if (!sizeData.available) {
-        option.disabled = true;
-        option.textContent += ' - Sold out';
+
+      function nextSlide() {
+        if (currentSlide < totalSlides - 1) {
+          currentSlide++;
+          updateGallery();
+        }
       }
-      sizeSelect.appendChild(option);
-    });
-  }
-  
-  // Function to find and select the correct variant
-  function updateSelectedVariant() {
-    const selectedColor = document.querySelector('[data-variant-color].border-black')?.dataset.variantColor;
-    const selectedSize = sizeSelect.value;
-    
-    if (!selectedColor || !selectedSize) return;
-    
-    const selectedVariant = variants.find(v => 
-      v.color === selectedColor && 
-      v.size === selectedSize
-    );
-    
-    if (selectedVariant) {
-      variantInput.value = selectedVariant.id;
-      variantPrice.textContent = selectedVariant.price;
-    }
-  }
-  
-  // Handle color selection
-  colorSelectors.forEach(selector => {
-    selector.addEventListener('click', () => {
-      const selectedColor = selector.dataset.variantColor;
-      
-      // Update active state styling
-      colorSelectors.forEach(el => {
-        el.classList.remove('border-black');
-        el.classList.add('border-transparent', 'hover:border-gray-300');
+
+      function prevSlide() {
+        if (currentSlide > 0) {
+          currentSlide--;
+          updateGallery();
+        }
+      }
+
+      function goToSlide(index) {
+        currentSlide = index;
+        updateGallery();
+      }
+
+      // Event listeners
+      galleryNext.addEventListener('click', nextSlide);
+      galleryPrev.addEventListener('click', prevSlide);
+
+      galleryDots.forEach((dot, index) => {
+        dot.addEventListener('click', () => goToSlide(index));
       });
+
+      // Touch/swipe support
+      let startX = 0;
+      let startY = 0;
+      let isDragging = false;
+
+      galleryTrack.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isDragging = true;
+      });
+
+      galleryTrack.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+      });
+
+      galleryTrack.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const diffX = startX - endX;
+        const diffY = startY - endY;
+
+        // Only handle horizontal swipes
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+          if (diffX > 0) {
+            nextSlide();
+          } else {
+            prevSlide();
+          }
+        }
+
+        isDragging = false;
+      });
+
+      // Initialize gallery
+      updateGallery();
+    }
+
+    // Function to update cart drawer content
+    async function updateCartDrawer() {
+      try {
+        const response = await fetch(window.location.href + '?section_id=cart');
+        if (response.ok) {
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const newCartDrawer = doc.querySelector('cart-drawer');
+          const currentCartDrawer = document.querySelector('cart-drawer');
+          
+          if (newCartDrawer && currentCartDrawer) {
+            // Update the inner content while preserving the custom element
+            currentCartDrawer.innerHTML = newCartDrawer.innerHTML;
+            
+            // Re-initialize the cart drawer functionality
+            if (typeof currentCartDrawer.reinitialize === 'function') {
+              currentCartDrawer.reinitialize();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error updating cart drawer:', error);
+      }
+    }
+
+    // Handle add to cart form submission
+    if (productForm) {
+      productForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(productForm);
+        const submitButton = productForm.querySelector('input[type="submit"]');
+        
+        // Disable button and show loading state
+        const originalValue = submitButton.value;
+        submitButton.value = 'ADDING...';
+        submitButton.disabled = true;
+        
+        try {
+          const response = await fetch('/cart/add.js', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (response.ok) {
+            const item = await response.json();
+            
+            // Reset button
+            submitButton.value = originalValue;
+            submitButton.disabled = false;
+            
+            // Fetch updated cart and update display
+            await updateCartDrawer();
+            
+            // Open cart drawer
+            document.dispatchEvent(new CustomEvent('cart:open'));
+          } else {
+            throw new Error('Failed to add to cart');
+          }
+        } catch (error) {
+          console.error('Error adding to cart:', error);
+          
+          // Reset button on error
+          submitButton.value = originalValue;
+          submitButton.disabled = false;
+          
+          // You could show an error message here
+          alert('Error adding item to cart. Please try again.');
+        }
+      });
+    }
+
+    // Get variant data from JSON
+    const variantData = JSON.parse(
+      document.getElementById('product-variant-data').textContent
+    );
+    const variants = variantData.variants;
+
+    // Function to update available sizes based on selected color
+    function updateAvailableSizes(selectedColor) {
+      // Clear current options
+      sizeSelect.innerHTML = '<option value="">Select Size</option>';
+
+      // Find all variants with the selected color
+      const availableSizes = variants.filter((v) => v.color === selectedColor);
+
+      // Group by size to avoid duplicates
+      const sizeGroups = {};
+      availableSizes.forEach((variant) => {
+        if (!sizeGroups[variant.size]) {
+          sizeGroups[variant.size] = {
+            size: variant.size,
+            available: variant.available,
+          };
+        }
+      });
+
+      // Add size options
+      Object.values(sizeGroups).forEach((sizeData) => {
+        const option = document.createElement('option');
+        option.value = sizeData.size;
+        option.textContent = sizeData.size;
+        if (!sizeData.available) {
+          option.disabled = true;
+          option.textContent += ' - Sold out';
+        }
+        sizeSelect.appendChild(option);
+      });
+    }
+
+    // Function to check if button should be enabled
+    function updateButtonState() {
+      const hasSizeVariants = sizeSelect && sizeSelect.options.length > 1;
+      const sizeSelected = sizeSelect ? sizeSelect.value !== '' : true;
       
-      selector.classList.remove('border-transparent', 'hover:border-gray-300');
-      selector.classList.add('border-black');
-      
-      // Update available sizes for this color
-      updateAvailableSizes(selectedColor);
-      
-      // Update the variant selection
-      updateSelectedVariant();
+      if (addToCartButton) {
+        if (hasSizeVariants && !sizeSelected) {
+          addToCartButton.disabled = true;
+          addToCartButton.classList.add('opacity-50', 'cursor-not-allowed');
+          addToCartButton.classList.remove('hover:bg-white', 'hover:text-black');
+        } else {
+          addToCartButton.disabled = false;
+          addToCartButton.classList.remove('opacity-50', 'cursor-not-allowed');
+          addToCartButton.classList.add('hover:bg-white', 'hover:text-black');
+        }
+      }
+    }
+
+    // Function to find and select the correct variant
+    function updateSelectedVariant() {
+      const selectedColor = document.querySelector(
+        '[data-variant-color].border-black'
+      )?.dataset.variantColor;
+      const selectedSize = sizeSelect ? sizeSelect.value : null;
+
+      updateButtonState();
+
+      if (!selectedColor || (sizeSelect && !selectedSize)) return;
+
+      const selectedVariant = variants.find(
+        (v) => v.color === selectedColor && v.size === selectedSize
+      );
+
+      if (selectedVariant) {
+        variantInput.value = selectedVariant.id;
+        variantPrice.textContent = selectedVariant.price;
+      }
+    }
+
+    // Handle color selection
+    colorSelectors.forEach((selector) => {
+      selector.addEventListener('click', () => {
+        const selectedColor = selector.dataset.variantColor;
+
+        // Update active state styling
+        colorSelectors.forEach((el) => {
+          el.classList.remove('border-black');
+          el.classList.add('border-transparent', 'hover:border-gray-300');
+        });
+
+        selector.classList.remove(
+          'border-transparent',
+          'hover:border-gray-300'
+        );
+        selector.classList.add('border-black');
+
+        // Update available sizes for this color
+        updateAvailableSizes(selectedColor);
+
+        // Reset size selection when color changes
+        if (sizeSelect) {
+          sizeSelect.value = '';
+        }
+
+        // Update the variant selection and button state
+        updateSelectedVariant();
+      });
     });
+
+    // Handle size selection
+    if (sizeSelect) {
+      sizeSelect.addEventListener('change', updateSelectedVariant);
+    }
+
+    // Initialize with the first color selected
+    if (colorSelectors.length > 0) {
+      const firstColor = colorSelectors[0].dataset.variantColor;
+      updateAvailableSizes(firstColor);
+    }
+
+    // Initialize button state on page load
+    updateButtonState();
   });
-  
-  // Handle size selection
-  sizeSelect.addEventListener('change', updateSelectedVariant);
-  
-  // Initialize with the first color selected
-  if (colorSelectors.length > 0) {
-    const firstColor = colorSelectors[0].dataset.variantColor;
-    updateAvailableSizes(firstColor);
-  }
-});
 {% endjavascript %}

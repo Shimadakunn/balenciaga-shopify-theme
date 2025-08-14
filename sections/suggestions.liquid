@@ -1,5 +1,7 @@
 <section class='flex w-full flex-col'>
-  <h2 class='border-b border-black p-2 text-sm md:p-4'>Suggestions</h2>
+  <h2 class='border-b border-black p-2 text-sm md:p-4'>
+    {{ section.settings.suggestion_text }}
+  </h2>
   <div class='grid grid-cols-2 gap-px bg-black md:grid-cols-4'>
     {% if section.blocks.size > 0 %}
       {% for block in section.blocks %}
@@ -53,6 +55,14 @@
 {% schema %}
 {
   "name": "Suggestions",
+  "settings": [
+    {
+      "type": "text",
+      "id": "suggestion_text",
+      "label": "Suggestion Text",
+      "default": "Best Sellers"
+    }
+  ],
   "blocks": [
     {
       "type": "suggestion_product",

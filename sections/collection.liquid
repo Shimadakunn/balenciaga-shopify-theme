@@ -4,17 +4,70 @@
       {{ collection.title | upcase }}
     </h2>
   </div>
+
   <div class='grid grid-cols-2 gap-px bg-black md:grid-cols-4'>
     {% for product in collection.products %}
       <a
         href='{{ product.url }}'
-        class='flex w-full flex-col justify-between bg-white'
+        class='group flex w-full flex-col justify-between bg-white'
       >
-        {{
-          product.featured_image
-          | image_url: width: 800
-          | image_tag: class: 'h-[85%] w-full object-cover'
-        }}
+        <!-- Gallery -->
+        <div class='relative block h-[85%] w-full'>
+          <div class='gallery-container h-full w-full overflow-hidden'>
+            <div
+              class='gallery-images flex w-full transition-transform duration-300 ease-in-out'
+              id='gallery-track'
+              style='width: {{ product.images.size | times: 100 }}%'
+            >
+              {% for image in product.images %}
+                <div
+                  class='gallery-slide flex-shrink-0'
+                  style='width: {{ 100.0 | divided_by: product.images.size }}%'
+                >
+                  {{
+                    image
+                    | image_url: width: 800
+                    | image_tag: class: 'object-cover'
+                  }}
+                </div>
+              {% endfor %}
+            </div>
+
+            <!-- Navigation Arrows - Hide on mobile -->
+            <button
+              class='gallery-nav gallery-prev absolute top-1/2 left-0 z-10 hidden aspect-square w-10 -translate-y-1/2 items-center justify-center p-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 md:flex'
+              id='gallery-prev'
+            >
+              <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <button
+              class='gallery-nav gallery-next absolute top-1/2 right-0 z-10 hidden aspect-square w-10 -translate-y-1/2 items-center justify-center p-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 md:flex'
+              id='gallery-next'
+            >
+              <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Dot Indicators - Always visible on mobile -->
+          <div
+            class='gallery-dots absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 justify-center gap-2 opacity-100 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100'
+            id='gallery-dots'
+          >
+            {% for image in product.images %}
+              <button
+                class='dot aspect-square w-2 rounded-full transition-all duration-200 {% if forloop.first %}bg-black{% else %}bg-gray-300{% endif %}'
+                data-slide='{{ forloop.index0 }}'
+              ></button>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Product Title and Price -->
         <div class='flex h-[15%] flex-row items-center justify-between px-2 tracking-tight md:flex-col md:justify-center'>
           <h1 class='text-xs font-black'>
             {{ product.title | upcase }}
@@ -40,3 +93,97 @@
   {% comment %} Add border-bottom after the grid to avoid superposition with gap-px {% endcomment %}
   <div class='w-full border-b border-black'></div>
 </section>
+
+{% javascript %}
+  document.addEventListener('DOMContentLoaded', () => {
+    // Prevent gallery navigation from triggering product URL navigation
+    const galleryNavButtons = document.querySelectorAll(
+      '.gallery-nav, .gallery-dots .dot'
+    );
+    galleryNavButtons.forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+      });
+    });
+
+    // Initialize all product galleries
+    document.querySelectorAll('.gallery-container').forEach((gallery) => {
+      const track = gallery.querySelector('.gallery-images');
+      const slides = gallery.querySelectorAll('.gallery-slide');
+      const dots = gallery.parentElement.querySelectorAll('.dot');
+      const prevButton = gallery.querySelector('.gallery-prev');
+      const nextButton = gallery.querySelector('.gallery-next');
+
+      let currentSlide = 0;
+      const slideCount = slides.length;
+
+      // Skip setup if only one image
+      if (slideCount <= 1) return;
+
+      // Touch variables
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      // Add touch event listeners
+      gallery.addEventListener(
+        'touchstart',
+        (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+        },
+        { passive: true }
+      );
+
+      gallery.addEventListener(
+        'touchend',
+        (e) => {
+          touchEndX = e.changedTouches[0].screenX;
+          handleSwipe();
+        },
+        { passive: true }
+      );
+
+      function handleSwipe() {
+        const threshold = 50; // Minimum distance for swipe
+        if (touchStartX - touchEndX > threshold) {
+          // Swipe left
+          goToSlide((currentSlide + 1) % slideCount);
+        } else if (touchEndX - touchStartX > threshold) {
+          // Swipe right
+          goToSlide((currentSlide - 1 + slideCount) % slideCount);
+        }
+      }
+
+      function goToSlide(slideIndex) {
+        track.style.transform = `translateX(-${slideIndex * (100 / slideCount)}%)`;
+
+        // Update dots
+        dots.forEach((dot, index) => {
+          if (index === slideIndex) {
+            dot.classList.add('bg-black');
+            dot.classList.remove('bg-gray-300');
+          } else {
+            dot.classList.add('bg-gray-300');
+            dot.classList.remove('bg-black');
+          }
+        });
+
+        currentSlide = slideIndex;
+      }
+
+      // Set up navigation (dots and arrows)
+      if (prevButton)
+        prevButton.addEventListener('click', () => {
+          goToSlide((currentSlide - 1 + slideCount) % slideCount);
+        });
+
+      if (nextButton)
+        nextButton.addEventListener('click', () => {
+          goToSlide((currentSlide + 1) % slideCount);
+        });
+
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => goToSlide(index));
+      });
+    });
+  });
+{% endjavascript %}

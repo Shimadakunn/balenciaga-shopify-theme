@@ -8,5 +8,16 @@
       "subtotal": "Subtotal",
       "checkout": "Checkout"
     }
+  },
+  "search": {
+    "general": {
+      "title": "Search",
+      "placeholder": "Search products...",
+      "close": "Close search",
+      "searching": "Searching...",
+      "no_results": "No products found",
+      "start_typing": "Start typing to search products...",
+      "try_different": "Try different keywords"
+    }
   }
 }

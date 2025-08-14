@@ -1,0 +1,57 @@
+{% comment %}
+  Search results template for AJAX requests
+  This renders search results with proper Shopify money formatting
+{% endcomment %}
+
+{% paginate search.results by 8 %}
+  <div class='grid grid-cols-2 gap-px border-b bg-black'>
+    {% for product in search.results %}
+      <a
+        href='{{ product.url }}'
+        class='group flex w-full flex-col justify-between bg-white'
+        data-search-close
+      >
+        <!-- Product Image -->
+        <div class='relative block h-[200px] w-full'>
+          {% if product.featured_image %}
+            {{
+              product.featured_image
+              | image_url: width: 400
+              | image_tag: class: 'h-full w-full object-cover'
+            }}
+          {% else %}
+            <div class='flex h-full w-full items-center justify-center bg-gray-200'>
+              <svg
+                class='h-12 w-12 text-gray-400'
+                fill='currentColor'
+                viewBox='0 0 20 20'
+              >
+                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Product Title and Price -->
+        <div class='flex h-[60px] flex-col justify-center px-2 tracking-tight'>
+          <h1 class='truncate text-xs font-black'>
+            {{ product.title | upcase }}
+          </h1>
+          <h2 class='text-xs'>
+            {{ product.price | money }}
+          </h2>
+        </div>
+      </a>
+    {% endfor %}
+
+    {% comment %} Fill incomplete rows with empty white cells {% endcomment %}
+    {% assign grid_cols = 2 %}
+    {% assign remainder = search.results.size | modulo: grid_cols %}
+    {% if remainder != 0 %}
+      {% assign empty_cells = grid_cols | minus: remainder %}
+      {% for i in (1..empty_cells) %}
+        <div class='h-[260px] w-full bg-white'></div>
+      {% endfor %}
+    {% endif %}
+  </div>
+{% endpaginate %}

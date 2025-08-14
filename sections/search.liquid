@@ -1,0 +1,337 @@
+<search-modal class='pointer-events-none fixed inset-0 z-[60]'>
+  <!-- Overlay -->
+  <div
+    class='pointer-events-none fixed inset-0 bg-black/50 opacity-0 transition-opacity duration-300'
+    data-search-overlay
+  ></div>
+
+  <!-- Search Modal -->
+  <div
+    class='pointer-events-auto fixed top-0 left-1/2 flex h-full w-full max-w-2xl flex-col bg-white transition-transform duration-300 ease-in-out md:mt-4 md:h-auto md:max-h-[80vh] md:rounded-t-lg md:border md:border-black'
+    data-search-modal
+  >
+    <!-- Header -->
+    <div class='flex items-center justify-between p-[0.6rem]'>
+      <div class='w-1/3'></div>
+      <h2 class='w-1/3 text-center text-sm font-bold'>
+        {{ 'search.general.title' | t | upcase }}
+      </h2>
+      <div class='flex w-1/3 justify-end'>
+        <button
+          type='button'
+          class='rounded-md p-2 transition-colors hover:bg-gray-100'
+          data-search-close
+          aria-label='{{ 'search.general.close' | t }}'
+        >
+          <svg
+            class='h-4 w-4'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Input -->
+    <div class='flex items-center border-t border-b border-black'>
+      <svg
+        class='mx-2 h-4 w-4 text-black'
+        fill='none'
+        stroke='currentColor'
+        viewBox='0 0 24 24'
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input
+        type='text'
+        class='mx-2 w-full py-3 pr-10 text-sm font-light uppercase focus:ring-0 focus:outline-none'
+        placeholder='{{ 'search.general.placeholder' | t }}'
+        data-search-input
+      >
+    </div>
+
+    <!-- Search Results -->
+    <div class='min-h-[260px] flex-1 overflow-y-auto'>
+      <!-- Loading State -->
+      <div class='hidden py-8 text-center' data-search-loading>
+        <div
+          class='inline-block h-6 w-6 animate-spin rounded-full border-b-2 border-black'
+        ></div>
+        <p class='mt-2 text-sm text-gray-600'>
+          {{ 'search.general.searching' | t }}
+        </p>
+      </div>
+
+      <!-- Empty State -->
+      <div class='py-8 text-center' data-search-empty>
+        <svg
+          class='mx-auto h-12 w-12 text-gray-400'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <p class='mt-2 text-sm text-gray-600'>
+          {{ 'search.general.start_typing' | t }}
+        </p>
+      </div>
+
+      <!-- No Results -->
+      <div class='hidden py-8 text-center' data-search-no-results>
+        <p class='text-sm text-gray-600'>
+          {{ 'search.general.no_results' | t }}
+        </p>
+        <p class='mt-1 text-xs text-gray-500'>
+          {{ 'search.general.try_different' | t }}
+        </p>
+      </div>
+
+      <!-- Results Container -->
+      <div class='hidden' data-search-results>
+        <!-- Results will be populated here as a grid -->
+      </div>
+    </div>
+  </div>
+</search-modal>
+
+{% stylesheet %}
+  search-modal [data-search-modal] {
+    transform: translateX(-50%) translateY(-120%);
+  }
+
+  search-modal[open] [data-search-overlay] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  search-modal[open] [data-search-modal] {
+    transform: translateX(-50%) translateY(0%);
+  }
+
+  @media (max-width: 768px) {
+    search-modal[open] [data-search-modal] {
+      transform: translateX(-50%) translateY(0%);
+      height: 100vh;
+      max-height: none;
+      border-radius: 0;
+      margin-top: 0;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class SearchModal extends HTMLElement {
+    constructor() {
+      super();
+      console.log('SearchModal constructor called');
+      this.searchTimeout = null;
+      this.currentQuery = '';
+      this.#initializeElements();
+      this.#bindEvents();
+    }
+
+    #initializeElements() {
+      this.overlay = this.querySelector('[data-search-overlay]');
+      this.modal = this.querySelector('[data-search-modal]');
+      this.closeButtons = this.querySelectorAll('[data-search-close]');
+      this.searchInput = this.querySelector('[data-search-input]');
+      this.loadingState = this.querySelector('[data-search-loading]');
+      this.emptyState = this.querySelector('[data-search-empty]');
+      this.noResultsState = this.querySelector('[data-search-no-results]');
+      this.resultsContainer = this.querySelector('[data-search-results]');
+    }
+
+    #bindEvents() {
+      // Store bound handlers
+      if (!this.closeHandler) {
+        this.closeHandler = () => this.close();
+        this.openHandler = () => this.open();
+        this.keyHandler = (e) => {
+          if (e.key === 'Escape' && this.hasAttribute('open')) {
+            this.close();
+          }
+        };
+        this.inputHandler = (e) => this.#handleSearchInput(e);
+      }
+
+      // Close modal
+      this.closeButtons.forEach((button) => {
+        button.addEventListener('click', this.closeHandler);
+      });
+
+      if (this.overlay) {
+        this.overlay.addEventListener('click', this.closeHandler);
+      }
+
+      // Search input
+      if (this.searchInput) {
+        this.searchInput.addEventListener('input', this.inputHandler);
+      }
+
+      // Global events (only bind once)
+      if (!this.globalEventsBound) {
+        console.log('Binding search:open event listener');
+        document.addEventListener('search:open', this.openHandler);
+        document.addEventListener('keydown', this.keyHandler);
+        this.globalEventsBound = true;
+      }
+    }
+
+    open() {
+      console.log('SearchModal open() called');
+      this.setAttribute('open', '');
+      document.body.style.overflow = 'hidden';
+
+      // Focus search input
+      setTimeout(() => {
+        this.searchInput?.focus();
+      }, 100);
+    }
+
+    close() {
+      this.removeAttribute('open');
+      document.body.style.overflow = '';
+      this.#clearSearch();
+    }
+
+    #handleSearchInput(e) {
+      const query = e.target.value.trim();
+
+      // Clear previous timeout
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout);
+      }
+
+      if (query.length === 0) {
+        this.#showEmptyState();
+        return;
+      }
+
+      if (query.length < 2) {
+        return;
+      }
+
+      // Show loading state immediately
+      this.#showLoadingState();
+
+      // Debounce search
+      this.searchTimeout = setTimeout(() => {
+        this.#performSearch(query);
+      }, 300);
+    }
+
+    async #performSearch(query) {
+      try {
+        this.currentQuery = query;
+
+        // Fetch search results using Shopify's search template for proper money formatting
+        const response = await fetch(
+          `/search?q=${encodeURIComponent(query)}&type=product`
+        );
+
+        if (!response.ok) {
+          throw new Error('Search request failed');
+        }
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Extract the grid from the search results
+        const searchGrid = doc.querySelector('.grid.grid-cols-2');
+
+        // Only show results if this is still the current query
+        if (query === this.currentQuery) {
+          if (searchGrid && searchGrid.children.length > 0) {
+            this.#displayServerResults(searchGrid);
+          } else {
+            this.#showNoResultsState();
+          }
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        this.#showNoResultsState();
+      }
+    }
+
+    #displayServerResults(searchGrid) {
+      this.#hideAllStates();
+      this.resultsContainer.classList.remove('hidden');
+
+      // Clone the grid from server response
+      const gridContainer = searchGrid.cloneNode(true);
+
+      this.resultsContainer.innerHTML = '';
+      this.resultsContainer.appendChild(gridContainer);
+
+      // Re-bind close events for result links
+      this.resultsContainer
+        .querySelectorAll('[data-search-close]')
+        .forEach((link) => {
+          link.addEventListener('click', this.closeHandler);
+        });
+    }
+
+    #showLoadingState() {
+      this.#hideAllStates();
+      this.loadingState.classList.remove('hidden');
+    }
+
+    #showEmptyState() {
+      this.#hideAllStates();
+      this.emptyState.classList.remove('hidden');
+    }
+
+    #showNoResultsState() {
+      this.#hideAllStates();
+      this.noResultsState.classList.remove('hidden');
+    }
+
+    #hideAllStates() {
+      this.loadingState.classList.add('hidden');
+      this.emptyState.classList.add('hidden');
+      this.noResultsState.classList.add('hidden');
+      this.resultsContainer.classList.add('hidden');
+    }
+
+    #clearSearch() {
+      if (this.searchInput) {
+        this.searchInput.value = '';
+      }
+      this.currentQuery = '';
+      this.#showEmptyState();
+
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout);
+      }
+    }
+  }
+
+  customElements.define('search-modal', SearchModal);
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Search Modal",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Search Settings"
+    },
+    {
+      "type": "range",
+      "id": "max_results",
+      "label": "Maximum Results",
+      "min": 4,
+      "max": 20,
+      "step": 2,
+      "default": 8
+    }
+  ]
+}
+{% endschema %}

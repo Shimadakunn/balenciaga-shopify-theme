@@ -9,12 +9,12 @@
     {{ 'tailwind.css' | asset_url | stylesheet_tag }}
   </head>
   <body>
-    {% comment %} {% section 'announcement-bar' %} {% endcomment %}
     {% section 'header' %}
     <main id='main' role='main' class='pt-14 md:pt-10'>
       {{ content_for_layout }}
     </main>
     {% section 'footer' %}
     {% section 'cart' %}
+    {% section 'search' %}
   </body>
 </html>

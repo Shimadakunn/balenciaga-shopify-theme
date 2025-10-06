@@ -6,7 +6,8 @@
       "empty": "Your cart is empty",
       "continue_shopping": "Continue shopping",
       "subtotal": "Subtotal",
-      "checkout": "Checkout"
+      "checkout": "Checkout",
+      "suggested_product": "You might like this"
     }
   },
   "search": {

@@ -108,8 +108,8 @@
               </div>
               <div class='mt-2 flex items-center justify-between border-b border-black pb-4'>
                 <div></div>
-                <button 
-                  type='button' 
+                <button
+                  type='button'
                   class='text-sm underline hover:no-underline'
                   data-cart-remove
                   data-line='{{ forloop.index }}'
@@ -121,15 +121,45 @@
           {% endfor %}
         </div>
       {% else %}
-        <div class='py-8 text-center' data-cart-empty>
-          <p class='mb-4 text-gray-600'>{{ 'cart.general.empty' | t }}</p>
-          <button
-            type='button'
-            class='border border-black px-4 py-2 text-black transition-colors hover:bg-black hover:text-white'
-            data-cart-close
-          >
-            {{ 'cart.general.continue_shopping' | t | upcase }}
-          </button>
+        <div class='py-8 ' data-cart-empty>
+          <p class='mb-4 text-center text-gray-600'>
+            {{ 'cart.general.empty' | t }}
+          </p>
+          <p class='text-sm font-medium'>
+            {{ 'cart.general.suggested_product' | t }}
+          </p>
+          {% if section.blocks.size > 0 %}
+            <div class='mt-2 divide-y divide-black border-y border-black'>
+              {% for block in section.blocks %}
+                {% if block.settings.product %}
+                  {% assign suggested_product = block.settings.product %}
+                  <a href='{{ suggested_product.url }}' class='block'>
+                    {% if suggested_product.featured_image %}
+                      <img
+                        src='{{ suggested_product.featured_image | image_url: width: 300 }}'
+                        alt='{{ suggested_product.title }}'
+                        height='300'
+                        width='300'
+                        class='mx-auto mt-4 h-48 w-48 rounded-lg object-cover'
+                      >
+                    {% endif %}
+                    <div class='flex justify-between p-4 text-center'>
+                      <h3 class='text-sm font-medium'>
+                        {{ suggested_product.title }}
+                      </h3>
+                      <p class='text-sm'>
+                        {{ suggested_product.price | money }}
+                      </p>
+                    </div>
+                  </a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class='max-w-xs border'>
+              {% render 'product-placeholder' %}
+            </div>
+          {% endif %}
         </div>
       {% endif %}
     </div>
@@ -184,7 +214,7 @@
       console.log('Initial buttons found:', {
         increase: this.increaseButtons.length,
         decrease: this.decreaseButtons.length,
-        remove: this.removeButtons.length
+        remove: this.removeButtons.length,
       });
     }
 
@@ -205,7 +235,7 @@
       console.log('Found buttons:', {
         increase: this.increaseButtons.length,
         decrease: this.decreaseButtons.length,
-        remove: this.removeButtons.length
+        remove: this.removeButtons.length,
       });
     }
 
@@ -225,15 +255,15 @@
       this.closeButtons.forEach((button) => {
         button.removeEventListener('click', this.closeHandler);
       });
-      
+
       this.increaseButtons.forEach((button) => {
         button.removeEventListener('click', this.increaseHandler);
       });
-      
+
       this.decreaseButtons.forEach((button) => {
         button.removeEventListener('click', this.decreaseHandler);
       });
-      
+
       this.removeButtons.forEach((button) => {
         button.removeEventListener('click', this.removeHandler);
       });
@@ -243,12 +273,12 @@
         console.log('Increase clicked for line:', e.target.dataset.line);
         this.#updateQuantity(e.target.dataset.line, 1);
       };
-      
+
       this.decreaseHandler = (e) => {
         console.log('Decrease clicked for line:', e.target.dataset.line);
         this.#updateQuantity(e.target.dataset.line, -1);
       };
-      
+
       this.removeHandler = (e) => {
         console.log('Remove clicked for line:', e.target.dataset.line);
         this.#removeItem(e.target.dataset.line);
@@ -285,7 +315,7 @@
 
         // ESC key to close
         document.addEventListener('keydown', this.keyHandler);
-        
+
         this.globalEventsBound = true;
       }
     }
@@ -309,22 +339,31 @@
     async #updateQuantity(line, change) {
       try {
         // Find the quantity span more reliably by looking for the button first
-        const button = this.querySelector(`[data-cart-increase][data-line="${line}"], [data-cart-decrease][data-line="${line}"]`);
+        const button = this.querySelector(
+          `[data-cart-increase][data-line="${line}"], [data-cart-decrease][data-line="${line}"]`
+        );
         if (!button) {
           console.error('Could not find quantity button for line:', line);
           return;
         }
-        
+
         const quantitySpan = button.parentElement.querySelector('span');
         if (!quantitySpan) {
           console.error('Could not find quantity span for line:', line);
           return;
         }
-        
+
         const currentQuantity = parseInt(quantitySpan.textContent.trim());
         const newQuantity = Math.max(0, currentQuantity + change);
 
-        console.log('Updating quantity for line', line, 'from', currentQuantity, 'to', newQuantity);
+        console.log(
+          'Updating quantity for line',
+          line,
+          'from',
+          currentQuantity,
+          'to',
+          newQuantity
+        );
 
         const response = await fetch('/cart/change.js', {
           method: 'POST',
@@ -379,37 +418,45 @@
     async #updateCartDisplay(cart) {
       try {
         // Fetch updated cart HTML from the cart section
-        const response = await fetch(`${window.location.pathname}?section_id=cart`);
+        const response = await fetch(
+          `${window.location.pathname}?section_id=cart`
+        );
         const text = await response.text();
         const parser = new DOMParser();
         const newDoc = parser.parseFromString(text, 'text/html');
-        
+
         // Update cart items container
         const currentItemsContainer = this.querySelector('[data-cart-items]');
         const newItemsContainer = newDoc.querySelector('[data-cart-items]');
-        
+
         if (currentItemsContainer && newItemsContainer) {
           currentItemsContainer.innerHTML = newItemsContainer.innerHTML;
         }
-        
+
         // Update cart total
         const currentTotal = this.querySelector('[data-cart-total]');
         const newTotal = newDoc.querySelector('[data-cart-total]');
-        
+
         if (currentTotal && newTotal) {
           currentTotal.textContent = newTotal.textContent;
         }
-        
+
         // Show/hide empty cart message and footer
         const cartItemsArea = this.querySelector('.flex-1.overflow-y-auto.p-4');
-        const cartFooter = this.querySelector('.space-y-4.border-t.border-gray-200.p-4');
-        const newCartItemsArea = newDoc.querySelector('.flex-1.overflow-y-auto.p-4');
-        const newCartFooter = newDoc.querySelector('.space-y-4.border-t.border-gray-200.p-4');
-        
+        const cartFooter = this.querySelector(
+          '.space-y-4.border-t.border-gray-200.p-4'
+        );
+        const newCartItemsArea = newDoc.querySelector(
+          '.flex-1.overflow-y-auto.p-4'
+        );
+        const newCartFooter = newDoc.querySelector(
+          '.space-y-4.border-t.border-gray-200.p-4'
+        );
+
         if (cartItemsArea && newCartItemsArea) {
           cartItemsArea.innerHTML = newCartItemsArea.innerHTML;
         }
-        
+
         if (cart.item_count === 0) {
           cartFooter?.remove();
         } else if (!cartFooter && newCartFooter) {
@@ -417,16 +464,16 @@
         } else if (cartFooter && newCartFooter) {
           cartFooter.innerHTML = newCartFooter.innerHTML;
         }
-        
+
         // Reinitialize event listeners for new elements
         this.reinitialize();
-        
+
         // Update any cart count displays on the page
-        const cartCountElements = document.querySelectorAll('[data-cart-count]');
-        cartCountElements.forEach(element => {
+        const cartCountElements =
+          document.querySelectorAll('[data-cart-count]');
+        cartCountElements.forEach((element) => {
           element.textContent = cart.item_count;
         });
-        
       } catch (error) {
         console.error('Error updating cart display:', error);
         // Fallback to reload if dynamic update fails
@@ -441,6 +488,19 @@
 {% schema %}
 {
   "name": "Cart Drawer",
-  "limit": 1
+  "limit": 1,
+  "blocks": [
+    {
+      "type": "suggestion_product",
+      "name": "Suggestion Product",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product"
+        }
+      ]
+    }
+  ]
 }
 {% endschema %}

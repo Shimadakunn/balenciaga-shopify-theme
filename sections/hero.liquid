@@ -24,8 +24,8 @@
   {% endif %}
   <div class='absolute bottom-[5%] left-1/2 flex -translate-x-1/2 transform flex-col  items-center gap-2'>
     <h1
-      class='text-xl font-bold tracking-[0.1em] uppercase'
-      style='color: {{ section.settings.hero_text_color }};'
+      class='font-bold tracking-[0.1em] uppercase'
+      style='color: {{ section.settings.hero_text_color }}; font-size: {{ section.settings.hero_text_font_size }}px;'
     >
       {{ section.settings.hero_text }}
     </h1>
@@ -75,6 +75,16 @@
       "id": "hero_text_color",
       "label": "Hero Text Color",
       "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "hero_text_font_size",
+      "label": "Hero Text Font Size",
+      "min": 12,
+      "max": 72,
+      "step": 1,
+      "unit": "px",
+      "default": 20
     }
   ],
   "blocks": [
